@@ -10,3 +10,5 @@
 ## bare metal
 
 - some hardware platforms or special tasks requires ANSI/ISO C to be used
+
+## [[decl/cpp/cross]]

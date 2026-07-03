@@ -194,6 +194,587 @@ language Decl:
 ## [[decl/core/core|Core Language Specification]]
 ## [[decl/std/std|Standard Library]]
 ## [[Low-Level Platform Interop]]
+# CMakeLists.txt
+
+```cmake
+cmake_minimum_required(VERSION 3.25)
+get_filename_component(CMAKE_PROJECT_NAME ${CMAKE_SOURCE_DIR} NAME)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+project(${CMAKE_PROJECT_NAME} VERSION 0.0.1 LANGUAGES CXX C ASM)
+
+include(version)  # binary files naming by version & git branch/hash
+include(src)      # scan project for source code files
+
+message("-- |")
+message("-- | toolchain: " ${CMAKE_CXX_COMPILER} " @ " ${CMAKE_TOOLCHAIN_FILE})
+message("-- |      host: " ${CMAKE_HOST_SYSTEM_NAME}-${CMAKE_HOST_SYSTEM_VERSION})
+message("-- |    target: " "hw:" ${HW} " cpu:" ${CPU} " arch:" ${ARCH} " os:" ${OS})
+message("-- |   startup: " "${S}")
+message("-- |    linker: " "${LD}")
+message("-- |    binary: " "${CMAKE_INSTALL_PREFIX}/${BIN_OUTPUT_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
+message("-- |       ini: " "${F}")
+message("-- |      data: " "${DATA}")
+message("-- |       cpp: " "${C} ${CP}")
+message("-- |       hpp: " "${H} ${HP}")
+message("-- |")
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${INC})
+
+add_executable(${CMAKE_PROJECT_NAME}
+    ${C}  ${H}          # C/C++ sources
+    ${CP} ${HP}         # generated parsers
+    ${S}  ${LD}         # embedded/lowlevel
+    ${F}                # init/config files & scripts
+    ${DATA}             # precompiled binary data (bytecode,..)
+)
+
+include(install) # target install
+```
+# CMakePresets.json
+
+```json
+{
+    "version": 6,
+    "buildPresets": [
+        {
+            "name"            :  "linux",
+            "configurePreset" :  "linux",
+            "targets"         : ["all","install"],
+            "jobs"            :   4
+        }
+    ],
+    "configurePresets": [
+        {
+            "name"            : "common",
+            "hidden"          :  true,
+            "binaryDir"       : "${sourceDir}/tmp/${presetName}",
+            "generator"       : "Unix Makefiles",
+            "cacheVariables"  : {
+                "CMAKE_INSTALL_PREFIX"    : "${sourceDir}/bin",
+                "CMAKE_MODULE_PATH"       : "${sourceDir}/cmake",
+                "CMAKE_BUILD_TYPE"        : "Debug",
+                "CMAKE_COLOR_DIAGNOSTICS" :  false,
+                "CMAKE_VERBOSE_MAKEFILE"  :  false
+            }
+        },
+        {
+            "name"            : "pc",
+            "inherits"        : "common",
+            "hidden"          : true,
+            "cacheVariables"  : {"HW":"pc", "CPU":"i5", "ARCH":"x86_64"}
+        },
+        {
+            "name"            : "linux",
+            "inherits"        : "pc",
+            "displayName"     : "x86_64-linux-gnu",
+            "toolchainFile"   : "${sourceDir}/cmake/x86_64-linux-gnu.cmake",
+            "cacheVariables"  : {"OS":"linux"}
+        }
+    ]
+}
+```
+# cmake/any_toolchain.cmake
+
+```cmake
+set(CMAKE_C_STANDARD   17)
+set(CMAKE_CXX_STANDARD 23)
+
+set(CMAKE_C_COMPILER_ID       GNU)
+set(CMAKE_CXX_COMPILER_ID     GNU)
+
+set(CMAKE_C_COMPILER   ${TOOLCHAIN_PREFIX}-gcc)
+set(CMAKE_ASM_COMPILER ${TOOLCHAIN_PREFIX}-as)
+set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PREFIX}-g++)
+set(CMAKE_LINKER       ${TOOLCHAIN_PREFIX}-ld)
+set(CMAKE_OBJCOPY      ${TOOLCHAIN_PREFIX}-objcopy)
+set(CMAKE_SIZE         ${TOOLCHAIN_PREFIX}-size)
+set(CMAKE_RC_COMPILER  ${TOOLCHAIN_PREFIX}-windres)
+
+# include(cross)
+
+add_compile_options(
+    # -Wall -Wextra               # -Wpedantic
+    # -Wno-implicit-fallthrough   # ragel
+    # -Wno-unused-function        # flex
+    # -Wno-write-strings          # yacc
+    # -Wno-unused-parameter       # stm32
+    $<$<CONFIG:Debug>:-DDEBUG>
+)
+
+# string (TOUPPER ${APP}  APP_  )
+# string (TOUPPER ${HW}   HW_   )
+# string (TOUPPER ${CPU}  CPU_  )
+# string (TOUPPER ${ARCH} ARCH_ )
+# string (TOUPPER ${OS}   OS_   )
+
+# add_compile_definitions(
+#     APP=$(APP) ${APP_} ${HW_} ${CPU_} ${ARCH_} ${OS_}
+# )
+
+add_link_options(
+    -Wl,--print-memory-usage
+)
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    add_compile_options(-O0 -g3)
+endif()
+if(CMAKE_BUILD_TYPE MATCHES Release)
+    add_compile_options(-Os -g0)
+endif()
+
+set(CMAKE_EXECUTABLE_SUFFIX_ASM ${CMAKE_EXECUTABLE_SUFFIX})
+set(CMAKE_EXECUTABLE_SUFFIX_C   ${CMAKE_EXECUTABLE_SUFFIX})
+set(CMAKE_EXECUTABLE_SUFFIX_CXX ${CMAKE_EXECUTABLE_SUFFIX})
+
+# file(GLOB LD hw/${HW}/*.ld)
+```
+# inc/app.hpp
+
+```cpp
+#pragma once
+
+#include "lib.hpp"
+#include "main.hpp"
+#include "syntax.hpp"
+```
+# [[cpp/clang-format|clang-format]]
+
+every C/C++ project required this file in project root:
+
+## `/.clang-format`
+
+```
+BasedOnStyle : Google
+UseTab       : Never
+IndentWidth  : 4
+TabWidth     : 4
+ColumnLimit  : 80
+UseCRLF      : false
+
+AllowShortBlocksOnASingleLine    : Always
+AllowShortFunctionsOnASingleLine : All
+SortIncludes                     : true
+```
+# cmake
+## build scripts
+
+```files
+cmake/
+CMakeLists.txt
+CMakePresets.json
+```
+- [[decl/cpp/CMakeLists.txt|CMakeLists.txt]]
+	- [[decl/cpp/version.cmake]]
+	- [[decl/cpp/src.cmake]]
+	- [[decl/cpp/syntax.cmake]]
+	- [[decl/cpp/install.cmake]]
+
+## libs/tools search
+
+```files
+cmake/
+    FindRAGEL.cmake                // ragel used for some ASCII->num
+    FindREADLINE.cmake             // command line edit
+    FindZMQ.cmake                  // most simple IPC with async messages
+```
+
+## target toolchain configuration
+
+cross-build target can be switched using CMake presets:
+
+```files
+CMakePresets.json
+cmake/
+    any_toolchain.cmake              // shared config
+    x86_64-linux-gnu.cmake           // default: developer's Linux HOST
+    mingw-w64-ucrt-x86_64.cmake      // modern 64-bit Windows
+    i686-w64-mingw32.cmake           // compatibility: 32-bit (Win7+)
+    aarch64-linux-gnu.cmake          // Raspberry Pi 4+
+    armv7-linux-gnu.cmake            // retro 32-bit Raspberry's
+    arm-none-eabi.cmake              // Cortex-M/STM32 MCU's
+    xtensa-lx106-elf.cmake           // ESP32
+```
+
+- [[decl/cpp/CMakePresets.json|CMakePresets.json]]
+- [[decl/cpp/any_toolchain.cmake]]
+	- [[decl/cpp/x86_64-linux-gnu.cmake]]
+# `cpp::`
+## embedded C/C++ target
+
+- preferred: embedded C++ (embedded Linux & MCUs)
+  - hard realtime friendly code
+  - minimize used libs (including too fat STL)
+- generic C++ (backend/desktop)
+- ignore anything relates to immutability
+
+## bare metal
+
+- some hardware platforms or special tasks requires ANSI/ISO C to be used
+
+## [[decl/cpp/cross]]
+# multitarget C/C++ project
+
+## files
+
+```
+bin/
+lib/
+	inc/
+		lib.hpp
+	src/
+		lib.cpp
+inc/
+	app.hpp
+src/
+	app.cpp
+	app.lex
+	app.yacc
+hw/
+	inc/
+		hw.hpp
+	pc/
+		inc/
+			pc.hpp
+cpu/
+	inc/
+		cpu.hpp
+	i5/
+		inc/
+			i5.hpp
+arch/
+	inc/
+		arch.hpp
+	x86_64/
+		inc/
+			x86_64.hpp
+	i386/
+		inc/
+			i386.hpp
+os/
+	inc/
+		os.hpp
+```
+
+## GNU make
+
+- `Makefile`
+
+```Makefile
+# cross
+HW   ?= pc
+include hw/$(HW)/$(HW).mk
+include cpu/$(CPU)/$(CPU).mk
+include arch/$(ARCH)/$(ARCH).mk
+include os/$(OS)/$(OS).mk
+
+# src
+C += $(wildcard  src/*.c* lib/src/*.c*)
+C += $(wildcard   hw/$(HW)/src/*.c*)
+C += $(wildcard  cpu/$(CPU)/src/*.c*)
+C += $(wildcard arch/$(ARCH)/src/*.c*)
+C += $(wildcard   os/$(OS)/src/*.c*)
+H += $(wildcard  inc/*.h* lib/inc/*.h*)
+H += $(wildcard   hw/$(HW)/inc/*.h*)
+H += $(wildcard  cpu/$(CPU)/inc/*.h*)
+H += $(wildcard arch/$(ARCH)/inc/*.h*)
+H += $(wildcard   os/$(OS)/inc/*.h*)
+```
+
+- `hw/pc/pc.mk`
+
+```Makefile
+CPU ?= i5
+CFLAGS += -DPC
+```
+
+- `cpu/i5/i5.mk`
+
+```Makefile
+ARCH = x86_64
+CFLAGS += -DX86_64
+```
+
+- `arch/x86_64/x86_64.mk`
+
+```Makefile
+OS ?= linux
+CFLAGS += -DX86_64
+```
+
+- `os/linux/linux.mk`
+
+```Makefile
+CFLAGS += -DLINUX
+```
+# [[doxygen/doxygen|doxygen]]
+
+every C/C++ project requires this file must be in project root:
+
+## `/.doxygen`
+
+treat as decl interpolation template
+
+```
+PROJECT_NAME           = "{app.module}"
+PROJECT_BRIEF          = "{app.title}"
+PROJECT_LOGO           = doc/logo.png
+LAYOUT_FILE            = doc/DoxygenLayout.xml
+OUTPUT_DIRECTORY       = doc
+HTML_OUTPUT            = html
+INPUT                  = README.md inc src
+INPUT                 += hw cpu arch os
+INCLUDE_PATH           = inc
+EXCLUDE                = ref/* lib/python* *.pdf *.djvu
+WARN_IF_UNDOCUMENTED   = NO
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = README.md
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
+FILE_PATTERNS         += *.lex *.yacc *.ragel *.rl
+EXTENSION_MAPPING      = lex=C++ yacc=C++ ragel=C++ rl=C++ ino=C++
+HAVE_DOT               = YES
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_PACKAGE        = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_METHODS  = YES
+EXTRACT_ANON_NSPACES   = YES
+SORT_GROUP_NAMES       = YES
+REPEAT_BRIEF           = NO
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+```
+# files for any C/C++ project
+
+```
+lib
+├── *.?                 # optional script modules
+└── app.ini             # default program startup script (config file)
+inc
+├── app.hpp             # top-level header must be included in any .cpp
+├── lib.hpp             # all used libs includes
+├── syntax.hpp          # definitions for syntax parser
+└── main.hpp
+src
+├── lexer.lex           # \ config files & scripts syntax parser
+├── parser.yacc         # /
+└── main.cpp            # generic entry for POSIX/Linux apps
+```
+
+- inc/
+	- [[decl/cpp/app.hpp]]
+		- [[decl/cpp/lib.hpp]]
+		- [[decl/cpp/main.hpp]]
+		- [[decl/cpp/syntax.hpp]]
+- src/
+	- [[decl/cpp/main.cpp]]
+
+- [[decl/cpp/cmake|cmake]]
+# cmake/install.cmake
+
+```cmake
+set_target_properties(${CMAKE_PROJECT_NAME}
+    PROPERTIES OUTPUT_NAME ${BIN_OUTPUT_NAME}${CMAKE_EXECUTABLE_SUFFIX})
+
+install(TARGETS ${CMAKE_PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+add_custom_command(
+    OUTPUT              ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}
+    DEPENDS             ${CMAKE_PROJECT_NAME}
+    WORKING_DIRECTORY   ${CMAKE_SOURCE_DIR}
+    COMMAND             ${CMAKE_COMMAND} -E create_symlink
+    ARGS                ${BIN_OUTPUT_NAME}${CMAKE_EXECUTABLE_SUFFIX}
+                        ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME})
+```
+# cpp::io
+## std::io implementation in embedded C++
+
+# src/lexer.lex
+
+```cpp
+%{
+    char *yyfile = nullptr;
+%}
+
+%option noyywrap yylineno
+
+%%
+```
+# inc/lib.hpp
+
+```cpp
+#pragma once
+
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+```
+# src/main.cpp
+
+```cpp
+#include "app.hpp"
+
+int main(int argc, char *argv[]) {
+    arg(0, argv[0]);
+    for (int i = 1; i < argc; i++) {  //
+        arg(i, argv[i]);
+        yyfile = argv[i];
+        assert(yyin = fopen(yyfile, "r"));
+        yyparse();
+        fclose(yyin);
+        yyfile = nullptr;
+    }
+    return 0;
+}
+
+void arg(int argc, char *argv) {  //
+    fprintf(stderr, "%i: <%s>\n", argc, argv);
+}
+```
+
+- [[decl/cpp/main.hpp|main.hpp]]
+- [[decl/cpp/syntax.hpp]]
+- [[decl/cpp/lexer.lex]]
+- [[decl/cpp/parser.yacc]]
+# inc/main.hpp
+
+```
+#pragma once
+
+extern int main(int argc, char *argv[]);
+extern void arg(int argc, char *argv);
+```
+# src/parser.yacc
+
+```cpp
+%{
+    #include "syntax.hpp"
+%}
+
+%defines
+
+%%
+syntax:
+```
+# cmake/src.cmake
+
+```make
+file(GLOB_RECURSE C CONFIGURE_DEPENDS src/*.c*)
+file(GLOB_RECURSE H CONFIGURE_DEPENDS inc/*.h*)
+file(GLOB_RECURSE F CONFIGURE_DEPENDS lib/*.ini lib/*.? )
+
+# include dirs
+foreach(h ${H})
+    get_filename_component(d ${h} DIRECTORY)
+    list(APPEND INC ${d})
+endforeach()
+list(REMOVE_DUPLICATES INC)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${INC})
+```
+# cmake/syntax.cmake
+
+```cmake
+find_package(FLEX     REQUIRED)
+find_package(BISON    REQUIRED)
+find_package(RAGEL    REQUIRED)
+find_package(READLINE REQUIRED)
+
+file(GLOB_RECURSE X CONFIGURE_DEPENDS src/*.l*)
+file(GLOB_RECURSE Y CONFIGURE_DEPENDS src/*.y*)
+file(GLOB_RECURSE R CONFIGURE_DEPENDS src/*.r*)
+
+foreach(lex ${X})
+    get_filename_component(name ${lex} NAME_WE)
+    set(cpp "${CMAKE_CURRENT_BINARY_DIR}/${name}.lex.cpp")
+    set(hpp "${CMAKE_CURRENT_BINARY_DIR}/${name}.lex.hpp")
+    list(APPEND CP ${cpp})
+    list(APPEND HP ${hpp})
+    add_custom_command(
+        OUTPUT  ${cpp} ${hpp}
+        DEPENDS ${lex}
+        COMMAND ${FLEX_EXECUTABLE} -o${cpp} --header-file=${hpp} ${lex}
+    )
+endforeach()
+
+foreach(yacc ${Y})
+    get_filename_component(name ${yacc} NAME_WE)
+    set(cpp "${CMAKE_CURRENT_BINARY_DIR}/${name}.yacc.cpp")
+    set(hpp "${CMAKE_CURRENT_BINARY_DIR}/${name}.yacc.hpp")
+    list(APPEND CP ${cpp})
+    list(APPEND HP ${hpp})
+    add_custom_command(
+        OUTPUT  ${cpp} ${hpp}
+        DEPENDS ${yacc}
+        COMMAND ${BISON_EXECUTABLE} -o${cpp} ${yacc}
+    )
+endforeach()
+
+foreach(ragel ${R})
+    get_filename_component(name ${ragel} NAME_WE)
+    set(cpp "${CMAKE_CURRENT_BINARY_DIR}/${name}.ragel.cpp")
+    set(hpp "${CMAKE_CURRENT_BINARY_DIR}/${name}.ragel.hpp")
+    list(APPEND CP ${cpp})
+    list(APPEND HP ${hpp})
+    add_custom_command(
+        OUTPUT  ${cpp} ${hpp}
+        DEPENDS ${ragel}
+        COMMAND ${RAGEL_EXECUTABLE} -C -G2 -o ${cpp} ${ragel}
+    )
+endforeach()
+```
+# inc/syntax.hpp
+
+```cpp
+#pragma once
+
+extern char *yyfile;
+extern void yyerror(const char* msg);
+
+#include "lexer.lex.hpp"
+#include "parser.yacc.hpp"
+```
+# cmake/version.cmake
+
+```cmake
+execute_process(
+    OUTPUT_VARIABLE BRANCH
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(
+    OUTPUT_VARIABLE NOW
+    COMMAND date +%y%m%d # _%H%M
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(
+    OUTPUT_VARIABLE REL
+    COMMAND git rev-parse --short=4 HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+set(BIN_OUTPUT_NAME ${CMAKE_PROJECT_NAME}_${BRANCH}_${NOW}_${REL})
+```
+# cmake/x86_64-linux-gnu.cmake
+
+```cmake
+set(CMAKE_SYSTEM_NAME       Linux)
+set(CMAKE_SYSTEM_PROCESSOR  x86_64)
+set(TOOLCHAIN_PREFIX        x86_64-linux-gnu)
+set(CMAKE_EXECUTABLE_SUFFIX "")
+
+include(any_toolchain)
+
+add_compile_definitions(X86_64 LINUX)
+add_compile_options(-mtune=native)
+add_link_options()
+# -fsanitize=thread -static-libtsan -ltsan
+```
 # ![](vscode/logo.png) `abcd` 0.0.1
 ## Async ByteCode Dynamic language VM
 
@@ -256,20 +837,6 @@ top-down priority:
 	- **Thread-local GC** for automatic memory management
 	- **Class-based OOP** with inheritance and polymorphism
 	- **Rich pattern matching** support (inspired by Elixir/OCaml)
-#pragma once
-
-/// @defgroup libs libs
-/// @{
-#include <cassert>
-#include <cstdio>
-#include <cstdlib>
-/// @}
-
-/// @defgroup main main
-/// @{
-extern int main(int argc, char *argv[]);
-extern void arg(int argc, char *argv);
-/// @}
 #include "abcd.hpp"
 
 int main(int argc, char *argv[]) {  //
@@ -283,16 +850,31 @@ int main(int argc, char *argv[]) {  //
 void arg(int argc, char *argv) {  //
     fprintf(stderr, "%i: %s\n", argc, argv);
 }
-%{
-    #include "abcd.hpp"
-%}
+#pragma once
 
-%option noyywrap yylineno
+#include "lib.hpp"
 
-%%
-%{
-    #include "abcd.hpp"
-%}
+#ifdef LINUX
+#include "linux.hpp"
+#endif
+/// @defgroup lib lib
+/// @{
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+/// @}
+/// @defgroup pc pc
+/// @ingroup hw
+/// @defgroup i5 i5
+/// @ingroup cpu
+/// @defgroup x86_64 x86_64
+/// @ingroup arch
+/// @defgroup linux linux
+/// @ingroup os
 
-%%
-syntax:
+/// @defgroup main main
+/// @ingroup lib
+/// @{
+extern int main(int argc, char *argv[]);
+extern void arg(int argc, char *argv);
+/// @}

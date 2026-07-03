@@ -1,14 +1,7 @@
 #pragma once
 
-/// @defgroup libs libs
-/// @{
-#include <cassert>
-#include <cstdio>
-#include <cstdlib>
-/// @}
+#include "lib.hpp"
 
-/// @defgroup main main
-/// @{
-extern int main(int argc, char *argv[]);
-extern void arg(int argc, char *argv);
-/// @}
+#ifdef LINUX
+#include "linux.hpp"
+#endif

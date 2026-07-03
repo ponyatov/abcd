@@ -1,3 +1,4 @@
+# var
 APP = $(notdir $(CURDIR))
 
 # cross
@@ -7,22 +8,39 @@ include cpu/$(CPU)/$(CPU).mk
 include arch/$(ARCH)/$(ARCH).mk
 include os/$(OS)/$(OS).mk
 
-C += $(wildcard src/*.c*) tmp/$(APP).lex.cpp
-H += $(wildcard inc/*.h*)
+# src
+C += $(wildcard  src/*.c* lib/src/*.c*)
+C += $(wildcard   hw/$(HW)/src/*.c*)
+C += $(wildcard  cpu/$(CPU)/src/*.c*)
+C += $(wildcard arch/$(ARCH)/src/*.c*)
+C += $(wildcard   os/$(OS)/src/*.c*)
+H += $(wildcard  inc/*.h* lib/inc/*.h*)
+H += $(wildcard   hw/$(HW)/inc/*.h*)
+H += $(wildcard  cpu/$(CPU)/inc/*.h*)
+H += $(wildcard arch/$(ARCH)/inc/*.h*)
+H += $(wildcard   os/$(OS)/inc/*.h*)
 
-CFLAGS += -std=c++17 -Iinc -Itmp -O0 -g
+CP += tmp/$(APP).lex.cpp
 
+# cfg
+CFLAGS += -std=c++17 -Iinc -Itmp -Ilib/inc -O0 -g
+CFLAGS += -Ihw/$(HW)/inc -Icpu/$(CPU)/inc
+CFLAGS += -Iarch/$(ARCH)/inc -Ios/$(OS)/inc
+
+# all
 .PHONY: all run
 all: bin/$(APP) lib/$(APP).ini
 run: bin/$(APP) lib/$(APP).ini
 	$^
 
-bin/$(APP): $(C) $(H)
-	$(CXX) $(CFLAGS) -o $@ $(C) $(L)
+# rule
+bin/$(APP): $(C) $(CP) $(H)
+	$(CXX) $(CFLAGS) -o $@ $(C) $(CP) $(L)
 
 tmp/$(APP).lex.cpp: src/$(APP).lex
 	flex -o $@ $<
 
+# doc
 .PHONY: sync
 sync:
 	unison decl
@@ -34,6 +52,7 @@ doxy: .doxygen doc/DoxygenLayout.xml vscode/logo.png
 
 .PHONY: ai
 ai: sync
-	cat doc/decl/*.md doc/$(APP)/*.md README.md \
-		inc/* src/* \
+	cat doc/decl/*.md doc/decl/cpp/*.md \
+		doc/$(APP)/*.md README.md \
+		$(C) $(H) \
 			> tmp/abcd.ai.md
