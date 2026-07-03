@@ -2,7 +2,7 @@ CFLAGS += -DLINUX
 
 APT += libgmp-dev libmpfr-dev libmpc-dev libisl-dev
 
-# GMP_VER = 0.0.0
+GMP_VER = 6.3.0
 # MPFR_VER = 0.0.0
 # MPC_VER = 0.0.0
 BINUTILS_VER = 2.43
@@ -12,7 +12,7 @@ LINUX_VER    = 0.0.0
 UCLIBC_VER   = 0.0.0
 BUSYBOX_VER  = 0.0.0
 
-# GMP = gmp-$(GMP_VER)
+GMP = gmp-$(GMP_VER)
 # MPFR = mpfr-$(MPFR_VER)
 # MPC = mpc-$(MPC_VER)
 BINUTILS = binutils-$(BINUTILS_VER)
@@ -24,8 +24,13 @@ BUSYBOX  = busybox-$(BUSYBOX_VER)
 
 YANDEX = https://mirror.yandex.ru/mirrors/gnu
 
+GMP_GZ      = $(GMP).tar.xz
 BINUTILS_GZ = $(BINUTILS).tar.xz
 GCC_GZ      = $(GCC).tar.xz
+
+GZ += $(HOME)/gz/$(GMP_GZ)
+$(HOME)/gz/$(GMP_GZ):
+	$(CURL) $@ $(YANDEX)/gmp/$(GMP_GZ)
 
 GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
@@ -35,9 +40,13 @@ GZ += $(HOME)/gz/$(GCC_GZ)
 $(HOME)/gz/$(GCC_GZ):
 	$(CURL) $@ $(YANDEX)/gcc/$(GCC)/$(GCC_GZ)
 
+.PHONY: gmp0
+gmp0:
+	$(MAKE) $(REF)/$(GMP)/README.md
+
 .PHONY: binutils0
 
-BINUTILS0_CFG += --prefix=$(CROSS) --target=$(TARGET) --disable-nls
+BINUTILS0_CFG  = --prefix=$(CROSS) --target=$(TARGET) --disable-nls
 BINUTILS0_CFG += --with-sysroot=$(ROOT) --with-native-system-header-dir=/include
 BINUTILS0_CFG += --enable-lto --disable-multilib
 
@@ -45,18 +54,23 @@ binutils0: $(CROSS)/bin/$(TLD)
 $(CROSS)/bin/$(TLD):
 	$(MAKE) $(REF)/$(BINUTILS)/README.md
 	mkdir -p $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ;\
-	$(REF)/$(BINUTILS)/configure $(BINUTILS0_CFG) &&\
+	$(TPATH) $(REF)/$(BINUTILS)/configure $(BINUTILS0_CFG) &&\
 	$(MAKE) && $(MAKE) install-strip &&\
 	touch $@ ; rm -rf $(REF)/$(BINUTILS) $(TMP)/$(BINUTILS)
-$(REF)/$(BINUTILS)/README.md: $(HOME)/gz/$(BINUTILS_GZ)
-	cd $(REF) ; xzcat $< | tar x && touch $@
 
 .PHONY: gcc0
+
+GCC0_CFG  = $(BINUTILS0_CFG) --enable-languages="c"
+GCC0_CFG += --disable-threads --without-headers --with-newlib
 
 gcc0: $(CROSS)/bin/$(TCC)
 $(CROSS)/bin/$(TCC):
 	$(MAKE) $(REF)/$(GCC)/README.md
-$(REF)/$(GCC)/README.md: $(HOME)/gz/$(GCC_GZ)
+	mkdir -p $(TMP)/$(GCC) ; cd $(TMP)/$(GCC) ;\
+	$(TPATH) $(REF)/$(GCC)/configure $(GCC0_CFG)
+
+# unpack
+$(REF)/%/README.md: $(HOME)/gz/%.tar.xz
 	cd $(REF) ; xzcat $< | tar x && touch $@
 
 # GCC
