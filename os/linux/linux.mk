@@ -121,11 +121,14 @@ $(CROSS)/bin/$(TCC):
 LINUX_CFG := ARCH=$(ARCH) CROSS_COMPILE=$(TARGET)-
 
 linux: $(REF)/$(LINUX)/README.md
-	rm -f $(dir $<).config ; cd $(dir $<) ;\
-	$(TPATH) $(MAKE) $(LINUX_CFG) allnoconfig ;\
+	cat os/linux/all.linux > $(dir $<).config ;\
+	echo 'CONFIG_LOCALVERSION="-$(APP)"' >> $(dir $<).config ;\
+	echo 'CONFIG_DEFAULT_HOSTNAME="abcd"' >> $(dir $<).config ;\
+	cd $(dir $<) ;\
 	$(TPATH) $(MAKE) $(LINUX_CFG) menuconfig &&\
 	$(TPATH) $(MAKE) $(LINUX_CFG) bzImage &&\
 	cp arch/x86/boot/bzImage $(BOOT)/
+# $(TPATH) $(MAKE) $(LINUX_CFG) allnoconfig ;\
 
 .PHONY: boot bin/$(APP).iso
 
