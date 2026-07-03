@@ -1,0 +1,6 @@
+%{
+    #include "abcd.hpp"
+%}
+
+%%
+syntax:

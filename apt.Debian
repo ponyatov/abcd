@@ -1,0 +1,5 @@
+git make curl fzf unison
+code meld
+g++ cmake pkg-config clang-format
+gdb gdbserver valgrind doxygen
+flex bison ragel libreadline-dev
