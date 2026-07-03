@@ -106,12 +106,13 @@ GCC0_CFG  = $(BINUTILS0_CFG) $(CCLIBS0_WITH) --enable-languages="c"
 GCC0_CFG += --disable-threads --without-headers --with-newlib
 
 gcc0: $(CROSS)/bin/$(TCC)
-$(CROSS)/bin/$(TCC): cclibs0
+$(CROSS)/bin/$(TCC):
+	$(MAKE) cclibs0
 	$(MAKE) $(REF)/$(GCC)/README.md
 	mkdir -p $(TMP)/$(GCC) ; cd $(TMP)/$(GCC) ;\
 	$(TPATH) $(REF)/$(GCC)/configure $(GCC0_CFG)
 	cd $(TMP)/$(GCC) ; $(MAKE) all-gcc
-# cd $(TMP)/$(GCC) ; $(MAKE) install-gcc
+	cd $(TMP)/$(GCC) ; $(MAKE) install-gcc
 # cd $(TMP)/$(GCC) ; $(MAKE) all-target-libgcc
 # cd $(TMP)/$(GCC) ; $(MAKE) install-target-libgcc
 
