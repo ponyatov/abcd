@@ -31,7 +31,9 @@ $(HOME)/gz/$(BINUTILS_GZ):
 	$(CURL) $@ $(YANDEX)/binutils/$(BINUTILS_GZ)
 
 binutils0: $(REF)/$(BINUTILS)/README.md
-	$(dir $<)/configure --prefix=$(CROSS) --target=$(TARGET)
+	mkdir -p $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ;\
+	$(dir $<)/configure --prefix=$(CROSS) --target=$(TARGET) &&\
+	$(MAKE) && $(MAKE) install
 $(REF)/$(BINUTILS)/README.md: $(HOME)/gz/$(BINUTILS_GZ)
 	cd $(REF) ; xzcat $< | tar x && touch $@
 
