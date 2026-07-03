@@ -30,11 +30,17 @@ GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
 	$(CURL) $@ $(YANDEX)/binutils/$(BINUTILS_GZ)
 
-BINUTILS_CFG += --prefix=$(CROSS) --target=$(TARGET)
-binutils0: $(REF)/$(BINUTILS)/README.md
+BINUTILS0_CFG += --prefix=$(CROSS) --target=$(TARGET) --disable-nls
+BINUTILS0_CFG += --with-sysroot=$(ROOT) --with-native-system-header-dir=/include
+BINUTILS0_CFG += --enable-lto --disable-multilib
+
+binutils0: $(CROSS)/bin/$(TLD)
+$(CROSS)/bin/$(TLD):
+	$(MAKE) $(REF)/$(BINUTILS)/README.md
 	mkdir -p $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ;\
-	$(dir $<)/configure $(BINUTILS_CFG) &&\
-	$(MAKE) && $(MAKE) install-strip
+	$(REF)/$(BINUTILS)/configure $(BINUTILS0_CFG) &&\
+	$(MAKE) && $(MAKE) install-strip &&\
+	touch $@ ; rm -rf $(REF)/$(BINUTILS) $(TMP)/$(BINUTILS)
 $(REF)/$(BINUTILS)/README.md: $(HOME)/gz/$(BINUTILS_GZ)
 	cd $(REF) ; xzcat $< | tar x && touch $@
 
