@@ -1,0 +1,42 @@
+# deepseek and other AI generation requirements
+## free public chat used as AI translation engine
+
+- deepseek
+	  - can't work with file system directly
+	  - can't read any ASCII files, has very limited list of supported text formats
+		- so upload all .md files from `~/decl/lib`
+			- treated as Mardown+Decl code ([[Literate Programming]])
+- all answers from AI must be in a simple english
+	- including code comments
+	- to allow easy read generated code & docs both by non-native people and any AI
+- for short `decl` snippets in chat
+	- work as a high-level code translator from `decl`
+	- into selected target language: JS
+- **generated code must be**
+	- optimized (not minimized!) to be as small & simple as possible
+	- must be commented in doxygen style
+		- @file
+		- @brief
+		- @author
+		- @date: format `DD/MM/YYYY` (real current local time forced)
+		- @details
+	 - should be formatted with vertical alignment
+	 - type annotations preferred without spaces around ':'
+- DECL
+	- **HAS NO PARENS** !!! `()` in function/call syntax 
+		- () used only for expressions or operand grouping
+ - DEEPSEEK: THIS IS FORCED TO **YOU** AND NO EXCEPTIONS:
+	 - DECL:
+		 - NO FUCKING ()'s !!!
+		 - **HAS NO NEW** !!!
+		 - **self. not required**
+		 - {} required and must be ballanced
+- [[decl/decl|decl]]
+	- this target language must be selected by .decl file extension in AI request
+	- syntax
+		- ';' is expresssion splitter, not end of line finalizer
+	- constructors
+		- if init arguments has same names as class fields all implicit assignments must be dropped: no `self.field = field` or `field = field`
+		- if any function has no body code,
+			- it must be replaced with prototype without `{}`
+			- and totally dropped if was not used in a code

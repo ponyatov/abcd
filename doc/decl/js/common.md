@@ -1,0 +1,4 @@
+# CJS
+## CommonJS
+
+- `*.js` files

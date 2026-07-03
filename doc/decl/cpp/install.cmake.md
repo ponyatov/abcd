@@ -1,0 +1,16 @@
+# cmake/install.cmake
+
+```cmake
+set_target_properties(${CMAKE_PROJECT_NAME}
+    PROPERTIES OUTPUT_NAME ${BIN_OUTPUT_NAME}${CMAKE_EXECUTABLE_SUFFIX})
+
+install(TARGETS ${CMAKE_PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+add_custom_command(
+    OUTPUT              ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}
+    DEPENDS             ${CMAKE_PROJECT_NAME}
+    WORKING_DIRECTORY   ${CMAKE_SOURCE_DIR}
+    COMMAND             ${CMAKE_COMMAND} -E create_symlink
+    ARGS                ${BIN_OUTPUT_NAME}${CMAKE_EXECUTABLE_SUFFIX}
+                        ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME})
+```
