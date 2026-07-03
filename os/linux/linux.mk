@@ -1,16 +1,16 @@
 CFLAGS += -DLINUX
 
-APT += libgmp-dev libmpfr-dev libmpc-dev libisl-dev
+# APT += libgmp-dev libmpfr-dev libmpc-dev libisl-dev
 
-GMP_VER = 6.3.0
-MPFR_VER = 4.2.2
-# MPC_VER = 0.0.0
+GMP_VER      = 6.3.0
+MPFR_VER     = 4.2.2
+MPC_VER      = 1.4.1
 BINUTILS_VER = 2.43
 GCC_VER      = 12.5.0
-GDB_VER      = 0.0.0
-LINUX_VER    = 0.0.0
-UCLIBC_VER   = 0.0.0
-BUSYBOX_VER  = 0.0.0
+# GDB_VER      = 0.0.0
+# LINUX_VER    = 0.0.0
+# UCLIBC_VER   = 0.0.0
+# BUSYBOX_VER  = 0.0.0
 
 GMP      = gmp-$(GMP_VER)
 MPFR     = mpfr-$(MPFR_VER)
@@ -25,7 +25,7 @@ BUSYBOX  = busybox-$(BUSYBOX_VER)
 YANDEX = https://mirror.yandex.ru/mirrors/gnu
 
 GMP_GZ      = $(GMP).tar.xz
-MPFR_GZ      = $(MPFR).tar.xz
+MPFR_GZ     = $(MPFR).tar.xz
 MPC_GZ      = $(MPC).tar.xz
 BINUTILS_GZ = $(BINUTILS).tar.xz
 GCC_GZ      = $(GCC).tar.xz
@@ -36,19 +36,23 @@ $(HOME)/gz/$(GMP_GZ):
 GZ += $(HOME)/gz/$(MPFR_GZ)
 $(HOME)/gz/$(MPFR_GZ):
 	$(CURL) $@ $(YANDEX)/mpfr/$(MPFR_GZ)
+GZ += $(HOME)/gz/$(MPC_GZ)
+$(HOME)/gz/$(MPC_GZ):
+	$(CURL) $@ $(YANDEX)/mpc/$(MPC_GZ)
 
 GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
 	$(CURL) $@ $(YANDEX)/binutils/$(BINUTILS_GZ)
-
 GZ += $(HOME)/gz/$(GCC_GZ)
 $(HOME)/gz/$(GCC_GZ):
 	$(CURL) $@ $(YANDEX)/gcc/$(GCC)/$(GCC_GZ)
 
-.PHONY: gmp0
+.PHONY: gmp0 mpfr0 mpc0
 
 GCCLIBS0_CFG = --prefix=$(CROSS) --disable-shared
 GMP0_CFG     = $(GCCLIBS0_CFG)
+MPFR0_CFG    = $(GCCLIBS0_CFG)
+MPC0_CFG     = $(GCCLIBS0_CFG) --with-mpfr=$(CROSS)
 
 gmp0: $(CROSS)/lib/libgmp.a
 $(CROSS)/lib/libgmp.a:
@@ -57,6 +61,22 @@ $(CROSS)/lib/libgmp.a:
 	$(TPATH) $(REF)/$(GMP)/configure $(GMP0_CFG) &&\
 	$(MAKE) && $(MAKE) install-strip &&\
 	touch $@ ; rm -rf $(REF)/$(GMP) $(TMP)/$(GMP)
+
+mpfr0: $(CROSS)/lib/libmpfr.a
+$(CROSS)/lib/libmpfr.a:
+	$(MAKE) $(REF)/$(MPFR)/README.md
+	mkdir -p $(TMP)/$(MPFR) ; cd $(TMP)/$(MPFR) ;\
+	$(TPATH) $(REF)/$(MPFR)/configure $(MPFR0_CFG) &&\
+	$(MAKE) && $(MAKE) install-strip &&\
+	touch $@ ; rm -rf $(REF)/$(MPFR) $(TMP)/$(MPFR)
+
+mpc0: $(CROSS)/lib/libmpc.a
+$(CROSS)/lib/libmpc.a:
+	$(MAKE) $(REF)/$(MPC)/README.md
+	mkdir -p $(TMP)/$(MPC) ; cd $(TMP)/$(MPC) ;\
+	$(TPATH) $(REF)/$(MPC)/configure $(MPC0_CFG) &&\
+	$(MAKE) && $(MAKE) install-strip &&\
+	touch $@ ; rm -rf $(REF)/$(MPC) $(TMP)/$(MPC)
 
 .PHONY: binutils0
 
