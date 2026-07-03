@@ -118,6 +118,8 @@ $(CROSS)/bin/$(TCC):
 
 .PHONY: linux
 linux: $(REF)/$(LINUX)/README.md
+	rm -f $(dir $<).config ;\
+	cd $(dir $<) ; $(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(TARGET)- allnoconfig
 
 # unpack
 $(REF)/%/README.md: $(HOME)/gz/%.tar.xz
