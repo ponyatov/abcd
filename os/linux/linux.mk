@@ -132,9 +132,16 @@ linux: $(REF)/$(LINUX)/README.md
 ISOLINUX += $(ROOT)/isolinux/isohdpfx.bin
 ISOLINUX += $(ROOT)/isolinux/isohdppx.bin
 ISOLINUX += $(ROOT)/isolinux/isolinux.bin
+ISOLINUX += $(ROOT)/EFI/BOOT/ldlinux.e64
+ISOLINUX += $(ROOT)/EFI/BOOT/syslinux.c32
 
 boot: bin/$(APP).iso
+	$(QEMU) -cdrom $<
 bin/$(APP).iso: $(ISOLINUX)
+	xorriso -as mkisofs -o $@ -r root -V $(APP) \
+	-isohybrid-mbr $(ROOT)/isolinux/isohdpfx.bin \
+	-b isolinux/isolinux.bin \
+	-c isolinux/boot.cat -boot-load-size 4 -boot-info-table -no-emul-boot
 
 $(ROOT)/isolinux/%: /usr/lib/ISOLINUX/%
 	cp $< $@
