@@ -1,5 +1,12 @@
 APP = $(notdir $(CURDIR))
 
+# cross
+HW   ?= pc
+include hw/$(HW)/$(HW).mk
+include cpu/$(CPU)/$(CPU).mk
+include arch/$(ARCH)/$(ARCH).mk
+include os/$(OS)/$(OS).mk
+
 C += $(wildcard src/*.c*) tmp/$(APP).lex.cpp
 H += $(wildcard inc/*.h*)
 
@@ -20,6 +27,10 @@ tmp/$(APP).lex.cpp: src/$(APP).lex
 sync:
 	unison decl
 	unison $(APP)
+
+.PHONY: doxy
+doxy: .doxygen doc/DoxygenLayout.xml vscode/logo.png
+	rm -rf doc/html ; doxygen $< 1>/dev/null
 
 .PHONY: ai
 ai: sync
