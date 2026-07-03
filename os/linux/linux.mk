@@ -6,7 +6,7 @@ APT += libgmp-dev libmpfr-dev libmpc-dev libisl-dev
 # MPFR_VER = 0.0.0
 # MPC_VER = 0.0.0
 BINUTILS_VER = 2.43
-GCC_VER      = 0.0.0
+GCC_VER      = 12.5.0
 GDB_VER      = 0.0.0
 LINUX_VER    = 0.0.0
 UCLIBC_VER   = 0.0.0
@@ -25,10 +25,15 @@ BUSYBOX  = busybox-$(BUSYBOX_VER)
 YANDEX = https://mirror.yandex.ru/mirrors/gnu
 
 BINUTILS_GZ = $(BINUTILS).tar.xz
+GCC_GZ      = $(GCC).tar.xz
 
 GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
 	$(CURL) $@ $(YANDEX)/binutils/$(BINUTILS_GZ)
+
+GZ += $(HOME)/gz/$(GCC_GZ)
+$(HOME)/gz/$(GCC_GZ):
+	$(CURL) $@ $(YANDEX)/gcc/$(GCC)/$(GCC_GZ)
 
 .PHONY: binutils0
 
@@ -37,7 +42,6 @@ BINUTILS0_CFG += --with-sysroot=$(ROOT) --with-native-system-header-dir=/include
 BINUTILS0_CFG += --enable-lto --disable-multilib
 
 binutils0: $(CROSS)/bin/$(TLD)
-	$(TPATH) which $(TLD)
 $(CROSS)/bin/$(TLD):
 	$(MAKE) $(REF)/$(BINUTILS)/README.md
 	mkdir -p $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ;\
@@ -47,7 +51,14 @@ $(CROSS)/bin/$(TLD):
 $(REF)/$(BINUTILS)/README.md: $(HOME)/gz/$(BINUTILS_GZ)
 	cd $(REF) ; xzcat $< | tar x && touch $@
 
-# BINUTILS
+.PHONY: gcc0
+
+gcc0: $(CROSS)/bin/$(TCC)
+$(CROSS)/bin/$(TCC):
+	$(MAKE) $(REF)/$(GCC)/README.md
+$(REF)/$(GCC)/README.md: $(HOME)/gz/$(GCC_GZ)
+	cd $(REF) ; xzcat $< | tar x && touch $@
+
 # GCC
 # GDB
 # LINUX
