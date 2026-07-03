@@ -30,10 +30,10 @@ GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
 	$(CURL) $@ $(YANDEX)/binutils/$(BINUTILS_GZ)
 
-binutils0: $(TMP)/$(BINUTILS)/README.md
+binutils0: $(REF)/$(BINUTILS)/README.md
 	$(dir $<)/configure --prefix=$(CROSS) --target=$(TARGET)
-$(TMP)/$(BINUTILS)/README.md: $(HOME)/gz/$(BINUTILS_GZ)
-	cd $(TMP) ; xzcat $< | tar x && touch $@
+$(REF)/$(BINUTILS)/README.md: $(HOME)/gz/$(BINUTILS_GZ)
+	cd $(REF) ; xzcat $< | tar x && touch $@
 
 # BINUTILS
 # GCC
