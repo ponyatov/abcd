@@ -8,7 +8,7 @@ MPC_VER      = 1.4.1
 BINUTILS_VER = 2.43
 GCC_VER      = 12.5.0
 # GDB_VER      = 0.0.0
-# LINUX_VER    = 0.0.0
+LINUX_VER    = 5.19.9
 # UCLIBC_VER   = 0.0.0
 # BUSYBOX_VER  = 0.0.0
 
@@ -22,30 +22,36 @@ LINUX    = linux-$(LINUX_VER)
 UCLIBC   = uclibc-$(UCLIBC_VER)
 BUSYBOX  = busybox-$(BUSYBOX_VER)
 
-YANDEX = https://mirror.yandex.ru/mirrors/gnu
+YANDEX_GNU = https://mirror.yandex.ru/mirrors/gnu
+YANDEX_KRN = https://mirror.yandex.ru/pub/linux/kernel/v5.x/
 
 GMP_GZ      = $(GMP).tar.xz
 MPFR_GZ     = $(MPFR).tar.xz
 MPC_GZ      = $(MPC).tar.xz
 BINUTILS_GZ = $(BINUTILS).tar.xz
 GCC_GZ      = $(GCC).tar.xz
+LINUX_GZ    = $(LINUX).tar.xz
 
 GZ += $(HOME)/gz/$(GMP_GZ)
 $(HOME)/gz/$(GMP_GZ):
-	$(CURL) $@ $(YANDEX)/gmp/$(GMP_GZ)
+	$(CURL) $@ $(YANDEX_GNU)/gmp/$(GMP_GZ)
 GZ += $(HOME)/gz/$(MPFR_GZ)
 $(HOME)/gz/$(MPFR_GZ):
-	$(CURL) $@ $(YANDEX)/mpfr/$(MPFR_GZ)
+	$(CURL) $@ $(YANDEX_GNU)/mpfr/$(MPFR_GZ)
 GZ += $(HOME)/gz/$(MPC_GZ)
 $(HOME)/gz/$(MPC_GZ):
-	$(CURL) $@ $(YANDEX)/mpc/$(MPC_GZ)
+	$(CURL) $@ $(YANDEX_GNU)/mpc/$(MPC_GZ)
 
 GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
-	$(CURL) $@ $(YANDEX)/binutils/$(BINUTILS_GZ)
+	$(CURL) $@ $(YANDEX_GNU)/binutils/$(BINUTILS_GZ)
 GZ += $(HOME)/gz/$(GCC_GZ)
 $(HOME)/gz/$(GCC_GZ):
-	$(CURL) $@ $(YANDEX)/gcc/$(GCC)/$(GCC_GZ)
+	$(CURL) $@ $(YANDEX_GNU)/gcc/$(GCC)/$(GCC_GZ)
+
+GZ += $(HOME)/gz/$(LINUX_GZ)
+$(HOME)/gz/$(LINUX_GZ):
+	$(CURL) $@ $(YANDEX_KRN)/$(LINUX_GZ)
 
 .PHONY: cclibs0 gmp0 mpfr0 mpc0
 cclibs0: gmp0 mpfr0 mpc0
