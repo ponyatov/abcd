@@ -116,6 +116,9 @@ $(CROSS)/bin/$(TCC):
 # cd $(TMP)/$(GCC) ; $(MAKE) all-target-libgcc
 # cd $(TMP)/$(GCC) ; $(MAKE) install-target-libgcc
 
+.PHONY: linux
+linux: $(REF)/$(LINUX)/README.md
+
 # unpack
 $(REF)/%/README.md: $(HOME)/gz/%.tar.xz
 	cd $(REF) ; xzcat $< | tar x && touch $@
