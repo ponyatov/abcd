@@ -117,9 +117,29 @@ $(CROSS)/bin/$(TCC):
 # cd $(TMP)/$(GCC) ; $(MAKE) install-target-libgcc
 
 .PHONY: linux
+
+LINUX_CFG := ARCH=$(ARCH) CROSS_COMPILE=$(TARGET)-
+
 linux: $(REF)/$(LINUX)/README.md
 	rm -f $(dir $<).config ; cd $(dir $<) ;\
-	$(TPATH) $(MAKE) ARCH=$(ARCH) CROSS_COMPILE=$(TARGET)- allnoconfig
+	$(TPATH) $(MAKE) $(LINUX_CFG) allnoconfig ;\
+	$(TPATH) $(MAKE) $(LINUX_CFG) menuconfig &&\
+	$(TPATH) $(MAKE) $(LINUX_CFG) bzImage &&\
+	cp arch/x86/boot/bzImage $(BOOT)/
+
+.PHONY: boot bin/$(APP).iso
+
+ISOLINUX += $(ROOT)/isolinux/isohdpfx.bin
+ISOLINUX += $(ROOT)/isolinux/isohdppx.bin
+ISOLINUX += $(ROOT)/isolinux/isolinux.bin
+
+boot: bin/$(APP).iso
+bin/$(APP).iso: $(ISOLINUX)
+
+$(ROOT)/isolinux/%: /usr/lib/ISOLINUX/%
+	cp $< $@
+$(ROOT)/EFI/BOOT/%: /usr/lib/syslinux/modules/efi64/%
+	cp $< $@
 
 # unpack
 $(REF)/%/README.md: $(HOME)/gz/%.tar.xz
