@@ -30,10 +30,11 @@ GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
 	$(CURL) $@ $(YANDEX)/binutils/$(BINUTILS_GZ)
 
+BINUTILS_CFG += --prefix=$(CROSS) --target=$(TARGET)
 binutils0: $(REF)/$(BINUTILS)/README.md
 	mkdir -p $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ;\
-	$(dir $<)/configure --prefix=$(CROSS) --target=$(TARGET) &&\
-	$(MAKE) && $(MAKE) install
+	$(dir $<)/configure $(BINUTILS_CFG) &&\
+	$(MAKE) && $(MAKE) install-strip
 $(REF)/$(BINUTILS)/README.md: $(HOME)/gz/$(BINUTILS_GZ)
 	cd $(REF) ; xzcat $< | tar x && touch $@
 
