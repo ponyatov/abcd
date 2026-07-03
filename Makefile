@@ -1,6 +1,13 @@
 # var
 APP = $(notdir $(CURDIR))
 
+# dirs
+CWD = $(CURDIR)
+TMP = $(CWD)/tmp
+REF = $(CWD)/ref
+CROSS = $(CWD)/cross
+ROOT = $(CWD)/root
+
 # cross
 HW   ?= pc
 include hw/$(HW)/$(HW).mk
@@ -61,3 +68,13 @@ ai: sync
 		doc/$(APP)/*.md README.md \
 		$(C) $(H) \
 			> tmp/abcd.ai.md
+
+# install
+.PHONY: install update ref gz
+install: ref gz
+	$(MAKE) update
+update:
+	sudo apt update
+	sudo apt install -uy `cat apt.Debian` $(APT)
+ref: $(RF)
+gz:  $(GZ)

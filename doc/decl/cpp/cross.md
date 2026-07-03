@@ -1,4 +1,4 @@
-# multitarget C/C++ project
+# multi-target C/C++ project
 
 ## files
 
@@ -56,6 +56,11 @@ include cpu/$(CPU)/$(CPU).mk
 include arch/$(ARCH)/$(ARCH).mk
 include os/$(OS)/$(OS).mk
 
+# tool
+TCC = $(TARGET)-gcc
+TXX = $(TARGET)-g++
+TLD = $(TARGET)-ld
+
 # src
 C += $(wildcard  src/*.c* lib/src/*.c*)
 C += $(wildcard   hw/$(HW)/src/*.c*)
@@ -86,12 +91,48 @@ CFLAGS += -DX86_64
 - `arch/x86_64/x86_64.mk`
 
 ```Makefile
-OS ?= linux
+OS     ?= linux
+TARGET ?= x86_64-linux-gnu
 CFLAGS += -DX86_64
 ```
+
+## Linux
 
 - `os/linux/linux.mk`
 
 ```Makefile
 CFLAGS += -DLINUX
 ```
+
+### `ARCH != HOST`
+
+если целевая платформа не совпадает с платформой разработки `BUILD=x86_64` но при этом поддерживается ядром Linux, применяется сборка
+- кастомного кросс-компилятора С/С++
+- ядра Linux
+- стандартной библиотеки [[uclibc]]
+- набора базовых UNIX-утилит [[busybox]]
+- и исполняемого файла приложения, интегрированного в загрузочный образ файловой системы ([[Linux/initrd|initrd]])
+- полученный образ может быть запущен под эмулятором QEMU для отладки и тестирования
+
+дополнительные каталоги для кросс-компиляции специализированного embedded Linux:
+```
+cross/           # кросс-компилятор С/С++
+root/            # корневая файловая система (initrd)
+bin/
+	$(HW)-linux.iso  # загрузочный образ (CDROM/USBdrive для x86)
+```
+
+#### пакеты
+
+- библиотеки критичные для компиляции GNU gcc
+	- [[math/GMP]]
+	- [[math/MPFR]]
+	- [[math/MPC]]
+- GNU gcc
+	- [[binutils]]
+	- GCC
+	- GDB
+- минимальный embedded Linux
+	- LINUX
+	- [[uclibc]]
+	- [[busybox]]
