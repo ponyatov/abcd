@@ -30,11 +30,14 @@ GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
 	$(CURL) $@ $(YANDEX)/binutils/$(BINUTILS_GZ)
 
+.PHONY: binutils0
+
 BINUTILS0_CFG += --prefix=$(CROSS) --target=$(TARGET) --disable-nls
 BINUTILS0_CFG += --with-sysroot=$(ROOT) --with-native-system-header-dir=/include
 BINUTILS0_CFG += --enable-lto --disable-multilib
 
 binutils0: $(CROSS)/bin/$(TLD)
+	which $(TLD)
 $(CROSS)/bin/$(TLD):
 	$(MAKE) $(REF)/$(BINUTILS)/README.md
 	mkdir -p $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ;\
