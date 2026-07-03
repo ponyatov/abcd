@@ -46,6 +46,9 @@ os/
 - `Makefile`
 
 ```Makefile
+# var
+APP = $(notdir $(CURDIR))
+
 # cross
 HW   ?= pc
 include hw/$(HW)/$(HW).mk
