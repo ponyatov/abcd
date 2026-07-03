@@ -3,7 +3,7 @@ CFLAGS += -DLINUX
 APT += libgmp-dev libmpfr-dev libmpc-dev libisl-dev
 
 GMP_VER = 6.3.0
-# MPFR_VER = 0.0.0
+MPFR_VER = 4.2.2
 # MPC_VER = 0.0.0
 BINUTILS_VER = 2.43
 GCC_VER      = 12.5.0
@@ -12,9 +12,9 @@ LINUX_VER    = 0.0.0
 UCLIBC_VER   = 0.0.0
 BUSYBOX_VER  = 0.0.0
 
-GMP = gmp-$(GMP_VER)
-# MPFR = mpfr-$(MPFR_VER)
-# MPC = mpc-$(MPC_VER)
+GMP      = gmp-$(GMP_VER)
+MPFR     = mpfr-$(MPFR_VER)
+MPC      = mpc-$(MPC_VER)
 BINUTILS = binutils-$(BINUTILS_VER)
 GCC      = gcc-$(GCC_VER)
 GDB      = gdb-$(GDB_VER)
@@ -25,12 +25,17 @@ BUSYBOX  = busybox-$(BUSYBOX_VER)
 YANDEX = https://mirror.yandex.ru/mirrors/gnu
 
 GMP_GZ      = $(GMP).tar.xz
+MPFR_GZ      = $(MPFR).tar.xz
+MPC_GZ      = $(MPC).tar.xz
 BINUTILS_GZ = $(BINUTILS).tar.xz
 GCC_GZ      = $(GCC).tar.xz
 
 GZ += $(HOME)/gz/$(GMP_GZ)
 $(HOME)/gz/$(GMP_GZ):
 	$(CURL) $@ $(YANDEX)/gmp/$(GMP_GZ)
+GZ += $(HOME)/gz/$(MPFR_GZ)
+$(HOME)/gz/$(MPFR_GZ):
+	$(CURL) $@ $(YANDEX)/mpfr/$(MPFR_GZ)
 
 GZ += $(HOME)/gz/$(BINUTILS_GZ)
 $(HOME)/gz/$(BINUTILS_GZ):
@@ -41,8 +46,17 @@ $(HOME)/gz/$(GCC_GZ):
 	$(CURL) $@ $(YANDEX)/gcc/$(GCC)/$(GCC_GZ)
 
 .PHONY: gmp0
-gmp0:
+
+GCCLIBS0_CFG = --prefix=$(CROSS) --disable-shared
+GMP0_CFG     = $(GCCLIBS0_CFG)
+
+gmp0: $(CROSS)/lib/libgmp.a
+$(CROSS)/lib/libgmp.a:
 	$(MAKE) $(REF)/$(GMP)/README.md
+	mkdir -p $(TMP)/$(GMP) ; cd $(TMP)/$(GMP) ;\
+	$(TPATH) $(REF)/$(GMP)/configure $(GMP0_CFG) &&\
+	$(MAKE) && $(MAKE) install-strip &&\
+	touch $@ ; rm -rf $(REF)/$(GMP) $(TMP)/$(GMP)
 
 .PHONY: binutils0
 

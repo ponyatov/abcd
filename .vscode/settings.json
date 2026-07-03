@@ -3,7 +3,7 @@
         "doc/html": true,
     },
     "files.watcherExclude": {
-        "ref/**": true,
+        "ref/**": true, "cross/**": true,
     },
     "files.associations": {
         "*.ini": "properties", "*.f": "properties"
