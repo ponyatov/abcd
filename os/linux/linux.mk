@@ -37,7 +37,7 @@ BINUTILS0_CFG += --with-sysroot=$(ROOT) --with-native-system-header-dir=/include
 BINUTILS0_CFG += --enable-lto --disable-multilib
 
 binutils0: $(CROSS)/bin/$(TLD)
-	which $(TLD)
+	$(TPATH) which $(TLD)
 $(CROSS)/bin/$(TLD):
 	$(MAKE) $(REF)/$(BINUTILS)/README.md
 	mkdir -p $(TMP)/$(BINUTILS) ; cd $(TMP)/$(BINUTILS) ;\

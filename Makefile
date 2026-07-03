@@ -2,11 +2,12 @@
 APP = $(notdir $(CURDIR))
 
 # dirs
-CWD = $(CURDIR)
-TMP = $(CWD)/tmp
-REF = $(CWD)/ref
-CROSS = $(CWD)/cross
-ROOT = $(CWD)/root
+CWD    = $(CURDIR)
+TMP    = $(CWD)/tmp
+REF    = $(CWD)/ref
+CROSS  = $(CWD)/cross
+ROOT   = $(CWD)/root
+TPATH := PATH=$(CROSS)/bin:$(PATH)
 
 # cross
 HW   ?= pc
