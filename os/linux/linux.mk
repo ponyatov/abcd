@@ -47,12 +47,14 @@ GZ += $(HOME)/gz/$(GCC_GZ)
 $(HOME)/gz/$(GCC_GZ):
 	$(CURL) $@ $(YANDEX)/gcc/$(GCC)/$(GCC_GZ)
 
-.PHONY: gmp0 mpfr0 mpc0
+.PHONY: cclibs0 gmp0 mpfr0 mpc0
+cclibs0: gmp0 mpfr0 mpc0
 
-GCCLIBS0_CFG = --prefix=$(CROSS) --disable-shared
-GMP0_CFG     = $(GCCLIBS0_CFG)
-MPFR0_CFG    = $(GCCLIBS0_CFG)
-MPC0_CFG     = $(GCCLIBS0_CFG) --with-mpfr=$(CROSS)
+CCLIBS0_CFG  = --prefix=$(CROSS) --disable-shared
+GMP0_CFG     = $(CCLIBS0_CFG)
+MPFR0_CFG    = $(CCLIBS0_CFG)
+MPC0_CFG     = $(CCLIBS0_CFG) --with-mpfr=$(CROSS)
+CCLIBS0_WITH = --with-gmp=$(CROSS) --with-mpfr=$(CROSS) --with-mpc=$(CROSS)
 
 gmp0: $(CROSS)/lib/libgmp.a
 $(CROSS)/lib/libgmp.a:
@@ -94,14 +96,18 @@ $(CROSS)/bin/$(TLD):
 
 .PHONY: gcc0
 
-GCC0_CFG  = $(BINUTILS0_CFG) --enable-languages="c"
+GCC0_CFG  = $(BINUTILS0_CFG) $(CCLIBS0_WITH) --enable-languages="c"
 GCC0_CFG += --disable-threads --without-headers --with-newlib
 
 gcc0: $(CROSS)/bin/$(TCC)
-$(CROSS)/bin/$(TCC):
+$(CROSS)/bin/$(TCC): cclibs0
 	$(MAKE) $(REF)/$(GCC)/README.md
 	mkdir -p $(TMP)/$(GCC) ; cd $(TMP)/$(GCC) ;\
 	$(TPATH) $(REF)/$(GCC)/configure $(GCC0_CFG)
+	cd $(TMP)/$(GCC) ; $(MAKE) all-gcc
+# cd $(TMP)/$(GCC) ; $(MAKE) install-gcc
+# cd $(TMP)/$(GCC) ; $(MAKE) all-target-libgcc
+# cd $(TMP)/$(GCC) ; $(MAKE) install-target-libgcc
 
 # unpack
 $(REF)/%/README.md: $(HOME)/gz/%.tar.xz
