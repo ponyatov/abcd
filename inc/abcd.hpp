@@ -5,3 +5,5 @@
 #ifdef LINUX
 #include "linux.hpp"
 #endif
+
+#include "vm.hpp"

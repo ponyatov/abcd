@@ -460,6 +460,9 @@ os/
 - `Makefile`
 
 ```Makefile
+# var
+APP = $(notdir $(CURDIR))
+
 # cross
 HW   ?= pc
 include hw/$(HW)/$(HW).mk
@@ -857,11 +860,18 @@ void arg(int argc, char *argv) {  //
 #ifdef LINUX
 #include "linux.hpp"
 #endif
+
+/// @brief opcode
+enum class Op : uint8_t {  //
+    nop = 0x00,
+    halt = 0xFF
+}
 /// @defgroup lib lib
 /// @{
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <cstdint>
 /// @}
 /// @defgroup pc pc
 /// @ingroup hw
