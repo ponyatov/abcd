@@ -8,6 +8,11 @@ include cpu/$(CPU)/$(CPU).mk
 include arch/$(ARCH)/$(ARCH).mk
 include os/$(OS)/$(OS).mk
 
+# tool
+TCC = $(TARGET)-gcc
+TXX = $(TARGET)-g++
+TLD = $(TARGET)-ld
+
 # src
 C += $(wildcard  src/*.c* lib/src/*.c*)
 C += $(wildcard   hw/$(HW)/src/*.c*)
