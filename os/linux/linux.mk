@@ -139,6 +139,15 @@ ISOLINUX += $(ROOT)/isolinux/ldlinux.c32
 ISOLINUX += $(ROOT)/EFI/BOOT/ldlinux.e64
 ISOLINUX += $(ROOT)/EFI/BOOT/syslinux.c32
 
+
+.PHONY: root
+root:
+	cd $(ROOT) ; find . -type f \
+		! -path "./boot/*" \
+		! -path "./EFI/*" \
+		! -path "./isolinux/*" \
+	| cpio -o -H newc > $(ROOT)/boot/initrd.cpio
+
 boot: bin/$(APP).iso
 	$(QEMU) -vga qxl -boot d -cdrom $<
 bin/$(APP).iso: $(ISOLINUX)

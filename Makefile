@@ -71,7 +71,7 @@ doxy: .doxygen doc/DoxygenLayout.xml vscode/logo.png
 ai: sync
 	cat doc/decl/*.md doc/decl/cpp/*.md \
 		doc/$(APP)/*.md README.md \
-		$(C) $(H) \
+		$(C) $(H) root/isolinux/isolinux.cfg \
 			> tmp/abcd.ai.md
 
 # install
