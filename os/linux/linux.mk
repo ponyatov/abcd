@@ -140,17 +140,18 @@ ISOLINUX += $(ROOT)/EFI/BOOT/ldlinux.e64
 ISOLINUX += $(ROOT)/EFI/BOOT/syslinux.c32
 
 
-.PHONY: root
-root:
+.PHONY: root $(ROOT)/boot/$(APP).cpio
+root: $(ROOT)/boot/root.cpio
+$(ROOT)/boot/root.cpio:
 	cd $(ROOT) ; find . -type f \
 		! -path "./boot/*" \
 		! -path "./EFI/*" \
 		! -path "./isolinux/*" \
-	| cpio -o -H newc > $(ROOT)/boot/initrd.cpio
+	| cpio -o -H newc > $@
 
 boot: bin/$(APP).iso
 	$(QEMU) -vga qxl -boot d -cdrom $<
-bin/$(APP).iso: $(ISOLINUX)
+bin/$(APP).iso: $(ISOLINUX) $(ROOT)/boot/bzImage $(ROOT)/boot/root.cpio
 	xorriso -as mkisofs -o $@ -r root -V $(APP) \
 	-isohybrid-mbr $(ROOT)/isolinux/isohdpfx.bin \
 	-b isolinux/isolinux.bin \
